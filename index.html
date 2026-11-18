@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>여행 경비 정산 (N빵 & 여행 기록 관리)</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --text: #1f2937;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --card-bg: #ffffff;
+      --bg: #f8fafc;
+      --danger: #ef4444;
+      --success: #10b981;
+      --radius: 14px;
+      --safe-bottom: env(safe-area-inset-bottom, 16px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: calc(84px + var(--safe-bottom));
+    }
+
+    header {
+      background: #ffffff;
+      padding: 14px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .trip-selector-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .trip-select {
+      font-weight: 700;
+      font-size: 1.05rem;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      max-width: 190px;
+      padding: 4px 6px;
+      border-radius: 8px;
+    }
+
+    .trip-select:focus {
+      border-color: var(--primary);
+      background: #fff;
+    }
+
+    .btn-trip-manage {
+      background: var(--primary-light);
+      color: var(--primary);
+      border: none;
+      font-size: 0.82rem;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    main {
+      padding: 14px;
+      max-width: 520px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .card-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* 멤버 태그 */
+    .member-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .member-chip {
+      background: #f1f5f9;
+      color: #334155;
+      padding: 5px 10px;
+      border-radius: 18px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .member-chip button {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .member-chip button:hover {
+      color: var(--danger);
+    }
+
+    .member-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    input, select, button {
+      font-size: 0.95rem;
+      border-radius: 10px;
+    }
+
+    input[type="text"], input[type="number"], input[type="date"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      background: #fafafa;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      background: #fff;
+    }
+
+    .form-row-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .btn {
+      padding: 10px 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.05s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      font-size: 0.98rem;
+      margin-top: 4px;
+    }
+
+    /* 통계 요약 배너 */
+    .summary-box {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
+      border-radius: var(--radius);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .summary-label {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .summary-val {
+      font-size: 1.45rem;
+      font-weight: 800;
+    }
+
+    .summary-subval {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    /* 카테고리별 통계 막대 & 리스트 */
+    .cat-bar-container {
+      display: flex;
+      height: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #e2e8f0;
+      margin: 10px 0 16px;
+    }
+
+    .cat-bar-item {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .cat-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cat-card-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .cat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .cat-amount {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .cat-pct {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* 날짜별 지출 내역 */
+    .date-group {
+      margin-bottom: 14px;
+    }
+
+    .date-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .date-header {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      padding-left: 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .date-subtotal {
+      font-size: 0.8rem;
+      color: var(--primary);
+    }
+
+    .expense-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .expense-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 13px;
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .expense-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .expense-title {
+      font-weight: 600;
+      font-size: 0.92rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .expense-meta {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .cat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-weight: 600;
+      font-size: 0.72rem;
+    }
+
+    .payer-badge {
+      background: #e2e8f0;
+      color: #334155;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-weight: 600;
+      font-size: 0.72rem;
+    }
+
+    .expense-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 10px;
+    }
+
+    .expense-amount {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .btn-del {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      cursor: pointer;
+      padding: 3px 6px;
+      font-size: 1.1rem;
+    }
+
+    .btn-del:hover {
+      color: var(--danger);
+    }
+
+    /* 정산 송금 안내 */
+    .settle-step {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 13px;
+      background: #f8fafc;
+      border-radius: 10px;
+      border: 1px dashed #cbd5e1;
+      margin-bottom: 7px;
+      font-size: 0.9rem;
+    }
+
+    .settle-step:last-child {
+      margin-bottom: 0;
+    }
+
+    .settle-transfer {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .settle-arrow {
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .settle-amount {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .empty-placeholder {
+      text-align: center;
+      padding: 20px 10px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* 탭 내비게이션 */
+    .tab-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding-bottom: var(--safe-bottom);
+      z-index: 30;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.03);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 9px 0 7px;
+      background: none;
+      border: none;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+    }
+
+    .tab-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .tab-btn.active svg {
+      stroke: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* 모달 (여행 관리) */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 50;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      width: 100%;
+      max-width: 520px;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      padding: 20px;
+      max-height: 85vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .modal-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .trip-card-item {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .trip-card-item.active-trip {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+  </style>
+</head>
+<body>
+  <!-- 상단 헤더 & 여행 선택기 -->
+  <header>
+    <div class="trip-selector-wrap">
+      <span style="font-size: 1.2rem;">✈️</span>
+      <select id="tripSelect" class="trip-select" title="여행 선택"></select>
+    </div>
+    <button class="btn-trip-manage" id="openTripModalBtn">여행 관리 / 새 여행</button>
+  </header>
+
+  <main>
+    <!-- TAB 1: 지출 입력 & 날짜별 내역 -->
+    <div id="tab-records" class="tab-content active">
+      <!-- 멤버 설정 카드 -->
+      <section class="card">
+        <div class="card-title">
+          <span>👥 이번 여행 멤버 (<span id="memberCount">0</span>명)</span>
+        </div>
+        <div class="member-tags" id="memberList"></div>
+        <form id="addMemberForm" class="member-input-row">
+          <input type="text" id="newMemberName" placeholder="멤버 이름 (예: 민수, 지은)" maxlength="10" required>
+          <button type="submit" class="btn btn-primary" style="white-space: nowrap;">추가</button>
+        </form>
+      </section>
+
+      <!-- 지출 입력 폼 카드 -->
+      <section class="card">
+        <div class="card-title">
+          <span>✍️ 지출 입력</span>
+        </div>
+        <form id="expenseForm">
+          <div class="form-row-grid">
+            <div class="form-group">
+              <label for="expenseDate">날짜</label>
+              <input type="date" id="expenseDate" required>
+            </div>
+            <div class="form-group">
+              <label for="expenseCategory">비용 분류</label>
+              <select id="expenseCategory" required>
+                <option value="lodging">🏨 숙박비</option>
+                <option value="traffic">🚕 교통비</option>
+                <option value="food" selected>🍽️ 식음료비</option>
+                <option value="activity">🎟️ 관광/체험</option>
+                <option value="shopping">🛍️ 쇼핑/기타</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="expenseTitle">내역</label>
+            <input type="text" id="expenseTitle" placeholder="예: 흑돼지 저녁 식사, 감귤카페, 렌터카 주유" required>
+          </div>
+          <div class="form-row-grid">
+            <div class="form-group">
+              <label for="expenseAmount">금액 (원)</label>
+              <input type="number" id="expenseAmount" placeholder="금액 (예: 65000)" min="1" step="1" inputmode="numeric" required>
+            </div>
+            <div class="form-group">
+              <label for="expensePayer">지출자 (결제자)</label>
+              <select id="expensePayer" required>
+                <option value="">멤버를 등록하세요</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-submit">+ 지출 내역 추가</button>
+        </form>
+      </section>
+
+      <!-- 날짜별 지출 목록 카드 -->
+      <section class="card">
+        <div class="card-title">
+          <span>📋 날짜별 지출 목록</span>
+          <span style="font-size: 0.82rem; font-weight: normal; color: var(--text-muted);" id="totalExpenseCount">총 0건</span>
+        </div>
+        <div id="expensesByDateContainer">
+          <div class="empty-placeholder">등록된 지출 내역이 없습니다.<br>위 폼에서 지출을 등록해보세요!</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 2: 최종 정산 & 분류별 분석 -->
+    <div id="tab-settlement" class="tab-content">
+      <!-- 총액 요약 배너 -->
+      <section class="summary-box">
+        <div class="summary-row">
+          <span class="summary-label">이번 여행 총 지출</span>
+          <span class="summary-val" id="summaryTotalAmount">0원</span>
+        </div>
+        <div class="summary-row" style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px;">
+          <span class="summary-label">1인당 부담 금액 (N빵)</span>
+          <span class="summary-subval" id="summaryPerPerson">0원</span>
+        </div>
+      </section>
+
+      <!-- 항목/분류별 지출 정산 카드 (숙박/교통/식음료 등) -->
+      <section class="card">
+        <div class="card-title">
+          <span>🏷️ 항목별 지출 분류 (숙박·교통·식음료 등)</span>
+        </div>
+        <div class="cat-bar-container" id="categoryRatioBar"></div>
+        <div class="cat-grid" id="categoryStatGrid"></div>
+      </section>
+
+      <!-- 멤버별 결제/부담 현황 -->
+      <section class="card">
+        <div class="card-title">
+          <span>📊 멤버별 결제 현황</span>
+        </div>
+        <div id="memberBalanceList">
+          <div class="empty-placeholder">멤버와 지출 내역을 추가해주세요.</div>
+        </div>
+      </section>
+
+      <!-- 최소 송금 가이드 -->
+      <section class="card">
+        <div class="card-title">
+          <span>💸 송금 가이드 (누가 누구에게)</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+          최소한의 송금 횟수로 깔끔하게 끝내는 N빵 송금 플랜입니다.
+        </p>
+        <div id="settlementPlanList">
+          <div class="empty-placeholder">정산할 내역이 없습니다.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 하단 탭 내비게이션 -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="tab-records">
+      <svg viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      <span>지출 입력/내역</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-settlement">
+      <svg viewBox="0 0 24 24"><path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      <span>최종 정산 (분류·N빵)</span>
+    </button>
+  </nav>
+
+  <!-- 여행 목록 관리 모달 -->
+  <div class="modal-overlay" id="tripModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🧭 여행 기록 보관함</h2>
+        <button class="btn btn-secondary" id="closeTripModalBtn" style="padding: 4px 10px;">닫기</button>
+      </div>
+
+      <!-- 새 여행 생성 폼 -->
+      <form id="createTripForm" style="display: flex; gap: 8px;">
+        <input type="text" id="newTripTitle" placeholder="새 여행 이름 (예: 2026 제주 여행)" maxlength="20" required>
+        <button type="submit" class="btn btn-primary" style="white-space: nowrap;">생성</button>
+      </form>
+
+      <!-- 저장된 여행 목록 -->
+      <div id="savedTripList" style="margin-top: 6px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // 카테고리 정의
+    const CATEGORIES = {
+      lodging: { label: "숙박비", icon: "🏨", color: "#6366f1", bg: "#e0e7ff" },
+      traffic: { label: "교통비", icon: "🚕", color: "#0284c7", bg: "#e0f2fe" },
+      food: { label: "식음료비", icon: "🍽️", color: "#f59e0b", bg: "#fef3c7" },
+      activity: { label: "관광/체험", icon: "🎟️", color: "#10b981", bg: "#d1fae5" },
+      shopping: { label: "쇼핑/기타", icon: "🛍️", color: "#ec4899", bg: "#fce7f3" }
+    };
+
+    const STORAGE_KEY_APP = "travel_records_split_v2";
+
+    // 앱 데이터 초기화
+    let appData = JSON.parse(localStorage.getItem(STORAGE_KEY_APP)) || {
+      currentTripId: "trip_default",
+      trips: [
+        {
+          id: "trip_default",
+          title: "제주도 힐링 여행",
+          createdAt: "2026-11-14",
+          members: ["민수", "지은", "현우"],
+          expenses: [
+            {
+              id: "exp_1",
+              date: "2026-11-14",
+              title: "애월 독채 펜션 (2박)",
+              category: "lodging",
+              amount: 280000,
+              payer: "민수"
+            },
+            {
+              id: "exp_2",
+              date: "2026-11-14",
+              title: "렌터카 3일 대여 & 보험",
+              category: "traffic",
+              amount: 145000,
+              payer: "지은"
+            },
+            {
+              id: "exp_3",
+              date: "2026-11-14",
+              title: "흑돼지 근고기 저녁",
+              category: "food",
+              amount: 98000,
+              payer: "현우"
+            }
+          ]
+        }
+      ]
+    };
+
+    function saveAppData() {
+      localStorage.setItem(STORAGE_KEY_APP, JSON.stringify(appData));
+    }
+
+    function getCurrentTrip() {
+      let trip = appData.trips.find(t => t.id === appData.currentTripId);
+      if (!trip && appData.trips.length > 0) {
+        trip = appData.trips[0];
+        appData.currentTripId = trip.id;
+      }
+      return trip;
+    }
+
+    function formatWon(val) {
+      return Number(Math.round(val)).toLocaleString("ko-KR") + "원";
+    }
+
+    // 기본 날짜 설정
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("expenseDate").value = today;
+
+    // DOM 참조
+    const tripSelect = document.getElementById("tripSelect");
+    const openTripModalBtn = document.getElementById("openTripModalBtn");
+    const closeTripModalBtn = document.getElementById("closeTripModalBtn");
+    const tripModal = document.getElementById("tripModal");
+    const createTripForm = document.getElementById("createTripForm");
+    const newTripTitle = document.getElementById("newTripTitle");
+    const savedTripList = document.getElementById("savedTripList");
+
+    const memberListEl = document.getElementById("memberList");
+    const memberCountEl = document.getElementById("memberCount");
+    const expensePayerSelect = document.getElementById("expensePayer");
+    const addMemberForm = document.getElementById("addMemberForm");
+    const newMemberNameInput = document.getElementById("newMemberName");
+
+    const expenseForm = document.getElementById("expenseForm");
+    const expensesByDateContainer = document.getElementById("expensesByDateContainer");
+    const totalExpenseCountEl = document.getElementById("totalExpenseCount");
+
+    const summaryTotalAmountEl = document.getElementById("summaryTotalAmount");
+    const summaryPerPersonEl = document.getElementById("summaryPerPerson");
+    const categoryRatioBar = document.getElementById("categoryRatioBar");
+    const categoryStatGrid = document.getElementById("categoryStatGrid");
+    const memberBalanceListEl = document.getElementById("memberBalanceList");
+    const settlementPlanListEl = document.getElementById("settlementPlanList");
+
+    // 상단 여행 셀렉트 박스 렌더링
+    function renderTripSelect() {
+      tripSelect.innerHTML = "";
+      appData.trips.forEach(trip => {
+        const opt = document.createElement("option");
+        opt.value = trip.id;
+        opt.textContent = trip.title;
+        if (trip.id === appData.currentTripId) {
+          opt.selected = true;
+        }
+        tripSelect.appendChild(opt);
+      });
+    }
+
+    tripSelect.addEventListener("change", (e) => {
+      appData.currentTripId = e.target.value;
+      saveAppData();
+      renderAll();
+    });
+
+    // 여행 모달 열기/닫기
+    openTripModalBtn.addEventListener("click", () => {
+      renderTripModalList();
+      tripModal.classList.add("open");
+    });
+
+    closeTripModalBtn.addEventListener("click", () => {
+      tripModal.classList.remove("open");
+    });
+
+    tripModal.addEventListener("click", (e) => {
+      if (e.target === tripModal) {
+        tripModal.classList.remove("open");
+      }
+    });
+
+    // 새 여행 추가
+    createTripForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = newTripTitle.value.trim();
+      if (!title) return;
+
+      const newTrip = {
+        id: "trip_" + Date.now(),
+        title: title,
+        createdAt: new Date().toISOString().split('T')[0],
+        members: ["나"],
+        expenses: []
+      };
+
+      appData.trips.unshift(newTrip);
+      appData.currentTripId = newTrip.id;
+      newTripTitle.value = "";
+      saveAppData();
+      renderTripSelect();
+      renderTripModalList();
+      renderAll();
+      tripModal.classList.remove("open");
+    });
+
+    // 여행 목록 모달 내용 렌더링
+    function renderTripModalList() {
+      savedTripList.innerHTML = "";
+      appData.trips.forEach(trip => {
+        const item = document.createElement("div");
+        const isActive = trip.id === appData.currentTripId;
+        item.className = "trip-card-item " + (isActive ? "active-trip" : "");
+
+        const tripTotal = trip.expenses.reduce((s, e) => s + e.amount, 0);
+
+        item.innerHTML = `
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem;">${escapeHtml(trip.title)} ${isActive ? '✅' : ''}</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">
+              생성: ${trip.createdAt} · 멤버 ${trip.members.length}명 · 총 ${formatWon(tripTotal)}
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            ${!isActive ? `<button class="btn btn-secondary" style="font-size: 0.78rem; padding: 6px 10px;" onclick="switchTrip('${trip.id}')">선택</button>` : ''}
+            ${appData.trips.length > 1 ? `<button class="btn btn-danger" style="font-size: 0.78rem; padding: 6px 8px;" onclick="deleteTrip('${trip.id}')">삭제</button>` : ''}
+          </div>
+        `;
+        savedTripList.appendChild(item);
+      });
+    }
+
+    window.switchTrip = function(tripId) {
+      appData.currentTripId = tripId;
+      saveAppData();
+      renderTripSelect();
+      renderTripModalList();
+      renderAll();
+      tripModal.classList.remove("open");
+    };
+
+    window.deleteTrip = function(tripId) {
+      if (confirm("이 여행 기록을 완전히 삭제하시겠습니까? (삭제된 내역은 복구할 수 없습니다)")) {
+        appData.trips = appData.trips.filter(t => t.id !== tripId);
+        if (appData.currentTripId === tripId) {
+          appData.currentTripId = appData.trips[0].id;
+        }
+        saveAppData();
+        renderTripSelect();
+        renderTripModalList();
+        renderAll();
+      }
+    };
+
+    // 멤버 렌더링
+    function renderMembers() {
+      const trip = getCurrentTrip();
+      if (!trip) return;
+
+      memberCountEl.textContent = trip.members.length;
+      memberListEl.innerHTML = "";
+
+      if (trip.members.length === 0) {
+        memberListEl.innerHTML = '<span style="font-size:0.82rem; color:var(--text-muted);">멤버를 등록해주세요.</span>';
+      } else {
+        trip.members.forEach((m, idx) => {
+          const chip = document.createElement("div");
+          chip.className = "member-chip";
+          chip.innerHTML = `
+            <span>${escapeHtml(m)}</span>
+            <button type="button" onclick="removeMember(${idx})" title="삭제">&times;</button>
+          `;
+          memberListEl.appendChild(chip);
+        });
+      }
+
+      // 지출자 셀렉트 박스 갱신
+      const prevPayer = expensePayerSelect.value;
+      expensePayerSelect.innerHTML = "";
+      if (trip.members.length === 0) {
+        expensePayerSelect.innerHTML = '<option value="">먼저 멤버를 등록하세요</option>';
+      } else {
+        trip.members.forEach(m => {
+          const opt = document.createElement("option");
+          opt.value = m;
+          opt.textContent = m;
+          expensePayerSelect.appendChild(opt);
+        });
+        if (trip.members.includes(prevPayer)) {
+          expensePayerSelect.value = prevPayer;
+        }
+      }
+    }
+
+    // 멤버 추가
+    addMemberForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const trip = getCurrentTrip();
+      if (!trip) return;
+
+      const name = newMemberNameInput.value.trim();
+      if (!name) return;
+      if (trip.members.includes(name)) {
+        alert("이미 등록된 멤버입니다.");
+        return;
+      }
+
+      trip.members.push(name);
+      newMemberNameInput.value = "";
+      saveAppData();
+      renderMembers();
+      renderAll();
+    });
+
+    // 멤버 삭제
+    window.removeMember = function(idx) {
+      const trip = getCurrentTrip();
+      if (!trip) return;
+      const target = trip.members[idx];
+      const hasExpense = trip.expenses.some(e => e.payer === target);
+      if (hasExpense) {
+        if (!confirm(`'${target}'님이 결제한 지출 내역이 있습니다. 정말 삭제하시겠습니까?`)) {
+          return;
+        }
+      }
+      trip.members.splice(idx, 1);
+      saveAppData();
+      renderMembers();
+      renderAll();
+    };
+
+    // 지출 등록
+    expenseForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const trip = getCurrentTrip();
+      if (!trip) return;
+
+      if (trip.members.length === 0) {
+        alert("지출을 등록하기 전에 먼저 동행 멤버를 추가해주세요.");
+        return;
+      }
+
+      const date = document.getElementById("expenseDate").value;
+      const category = document.getElementById("expenseCategory").value;
+      const title = document.getElementById("expenseTitle").value.trim();
+      const amount = parseInt(document.getElementById("expenseAmount").value, 10);
+      const payer = document.getElementById("expensePayer").value;
+
+      if (!date || !category || !title || isNaN(amount) || amount <= 0 || !payer) {
+        alert("모든 입력 항목을 바르게 입력해주세요.");
+        return;
+      }
+
+      const newExpense = {
+        id: "exp_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        date,
+        category,
+        title,
+        amount,
+        payer
+      };
+
+      trip.expenses.push(newExpense);
+      saveAppData();
+
+      // 내역/금액 입력란 초기화 (날짜, 분류, 지출자는 연속 입력을 위해 유지)
+      document.getElementById("expenseTitle").value = "";
+      document.getElementById("expenseAmount").value = "";
+
+      renderAll();
+    });
+
+    // 지출 삭제
+    window.removeExpense = function(id) {
+      const trip = getCurrentTrip();
+      if (!trip) return;
+      if (confirm("이 지출 내역을 삭제하시겠습니까?")) {
+        trip.expenses = trip.expenses.filter(e => e.id !== id);
+        saveAppData();
+        renderAll();
+      }
+    };
+
+    // 날짜별 지출 렌더링
+    function renderExpenseList() {
+      const trip = getCurrentTrip();
+      if (!trip) return;
+
+      totalExpenseCountEl.textContent = `총 ${trip.expenses.length}건`;
+
+      if (trip.expenses.length === 0) {
+        expensesByDateContainer.innerHTML = '<div class="empty-placeholder">등록된 지출 내역이 없습니다.<br>위 폼에서 지출을 등록해보세요!</div>';
+        return;
+      }
+
+      // 날짜 역순 정렬 후 그룹핑
+      const sorted = [...trip.expenses].sort((a, b) => b.date.localeCompare(a.date));
+      const groups = {};
+      sorted.forEach(item => {
+        if (!groups[item.date]) groups[item.date] = [];
+        groups[item.date].push(item);
+      });
+
+      expensesByDateContainer.innerHTML = "";
+
+      Object.keys(groups).forEach(date => {
+        const items = groups[date];
+        const daySubtotal = items.reduce((sum, item) => sum + item.amount, 0);
+
+        const groupDiv = document.createElement("div");
+        groupDiv.className = "date-group";
+
+        const headerDiv = document.createElement("div");
+        headerDiv.className = "date-header";
+        headerDiv.innerHTML = `
+          <span>📅 ${formatDateLabel(date)}</span>
+          <span class="date-subtotal">소계: ${formatWon(daySubtotal)}</span>
+        `;
+        groupDiv.appendChild(headerDiv);
+
+        const listDiv = document.createElement("div");
+        listDiv.className = "expense-list";
+
+        items.forEach(item => {
+          const cat = CATEGORIES[item.category] || CATEGORIES.shopping;
+          const itemDiv = document.createElement("div");
+          itemDiv.className = "expense-item";
+          itemDiv.innerHTML = `
+            <div class="expense-info">
+              <div class="expense-title">${escapeHtml(item.title)}</div>
+              <div class="expense-meta">
+                <span class="cat-badge" style="background: ${cat.bg}; color: ${cat.color};">
+                  ${cat.icon} ${cat.label}
+                </span>
+                <span class="payer-badge">결제: ${escapeHtml(item.payer)}</span>
+              </div>
+            </div>
+            <div class="expense-right">
+              <span class="expense-amount">${formatWon(item.amount)}</span>
+              <button class="btn-del" onclick="removeExpense('${item.id}')" title="삭제">&times;</button>
+            </div>
+          `;
+          listDiv.appendChild(itemDiv);
+        });
+
+        groupDiv.appendChild(listDiv);
+        expensesByDateContainer.appendChild(groupDiv);
+      });
+    }
+
+    function formatDateLabel(dateStr) {
+      try {
+        const [y, m, d] = dateStr.split('-');
+        const date = new Date(y, m - 1, d);
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        return `${y}. ${m}. ${d} (${days[date.getDay()]})`;
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    // 최종 정산 & 분류별 통계 렌더링
+    function renderSettlement() {
+      const trip = getCurrentTrip();
+      if (!trip) return;
+
+      const totalAmount = trip.expenses.reduce((sum, e) => sum + e.amount, 0);
+      summaryTotalAmountEl.textContent = formatWon(totalAmount);
+
+      const count = trip.members.length;
+      if (count === 0 || trip.expenses.length === 0) {
+        summaryPerPersonEl.textContent = "0원";
+        categoryRatioBar.innerHTML = "";
+        categoryStatGrid.innerHTML = '<div class="empty-placeholder" style="grid-column: span 2;">지출 내역이 없습니다.</div>';
+        memberBalanceListEl.innerHTML = '<div class="empty-placeholder">멤버와 지출 내역을 추가해주세요.</div>';
+        settlementPlanListEl.innerHTML = '<div class="empty-placeholder">정산할 내역이 없습니다.</div>';
+        return;
+      }
+
+      const perPerson = Math.floor(totalAmount / count);
+      summaryPerPersonEl.textContent = `${formatWon(perPerson)} / 1인 (총 ${count}명)`;
+
+      // 1. 카테고리별 집계
+      const catTotals = { lodging: 0, traffic: 0, food: 0, activity: 0, shopping: 0 };
+      trip.expenses.forEach(e => {
+        const catKey = catTotals[e.category] !== undefined ? e.category : "shopping";
+        catTotals[catKey] += e.amount;
+      });
+
+      // 프로그레스 바 생성
+      categoryRatioBar.innerHTML = "";
+      Object.keys(catTotals).forEach(key => {
+        const amount = catTotals[key];
+        if (amount > 0 && totalAmount > 0) {
+          const pct = ((amount / totalAmount) * 100).toFixed(1);
+          const bar = document.createElement("div");
+          bar.className = "cat-bar-item";
+          bar.style.width = pct + "%";
+          bar.style.backgroundColor = CATEGORIES[key].color;
+          bar.title = `${CATEGORIES[key].label}: ${pct}%`;
+          categoryRatioBar.appendChild(bar);
+        }
+      });
+
+      // 카테고리 카드 그리드 생성
+      categoryStatGrid.innerHTML = "";
+      Object.keys(CATEGORIES).forEach(key => {
+        const cat = CATEGORIES[key];
+        const amount = catTotals[key] || 0;
+        const pct = totalAmount > 0 ? ((amount / totalAmount) * 100).toFixed(1) : 0;
+
+        const card = document.createElement("div");
+        card.className = "cat-card";
+        card.innerHTML = `
+          <div class="cat-card-header">
+            <span class="cat-dot" style="background: ${cat.color};"></span>
+            <span>${cat.icon} ${cat.label}</span>
+          </div>
+          <div class="cat-amount">${formatWon(amount)}</div>
+          <div class="cat-pct">${pct}% (1인당 ${formatWon(Math.floor(amount / count))})</div>
+        `;
+        categoryStatGrid.appendChild(card);
+      });
+
+      // 2. 멤버별 결제액 및 잔액 계산
+      const paidMap = {};
+      trip.members.forEach(m => paidMap[m] = 0);
+      trip.expenses.forEach(e => {
+        if (paidMap[e.payer] !== undefined) {
+          paidMap[e.payer] += e.amount;
+        } else {
+          paidMap[e.payer] = (paidMap[e.payer] || 0) + e.amount;
+        }
+      });
+
+      memberBalanceListEl.innerHTML = "";
+      const balances = [];
+
+      trip.members.forEach(m => {
+        const paid = paidMap[m] || 0;
+        const diff = paid - perPerson;
+        balances.push({ member: m, diff: diff });
+
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.justifyContent = "space-between";
+        row.style.alignItems = "center";
+        row.style.padding = "9px 0";
+        row.style.borderBottom = "1px solid var(--border)";
+
+        let diffBadge = "";
+        if (diff > 0) {
+          diffBadge = `<span style="color: var(--primary); font-weight: 700;">+${formatWon(diff)} (받기)</span>`;
+        } else if (diff < 0) {
+          diffBadge = `<span style="color: var(--danger); font-weight: 700;">${formatWon(Math.abs(diff))} (보내기)</span>`;
+        } else {
+          diffBadge = `<span style="color: var(--text-muted); font-weight: 600;">0원 (완료)</span>`;
+        }
+
+        row.innerHTML = `
+          <div>
+            <div style="font-weight: 600;">${escapeHtml(m)}</div>
+            <div style="font-size: 0.76rem; color: var(--text-muted);">총 결제: ${formatWon(paid)}</div>
+          </div>
+          <div style="text-align: right; font-size: 0.88rem;">
+            ${diffBadge}
+          </div>
+        `;
+        memberBalanceListEl.appendChild(row);
+      });
+
+      // 3. 최적 송금 알고리즘 (N빵 송금 경로)
+      const debtors = [];
+      const creditors = [];
+
+      balances.forEach(b => {
+        if (b.diff < 0) debtors.push({ member: b.member, amount: Math.abs(b.diff) });
+        else if (b.diff > 0) creditors.push({ member: b.member, amount: b.diff });
+      });
+
+      debtors.sort((a, b) => b.amount - a.amount);
+      creditors.sort((a, b) => b.amount - a.amount);
+
+      const transfers = [];
+      let dIdx = 0, cIdx = 0;
+
+      while (dIdx < debtors.length && cIdx < creditors.length) {
+        const debtor = debtors[dIdx];
+        const creditor = creditors[cIdx];
+        const payAmount = Math.min(debtor.amount, creditor.amount);
+
+        if (payAmount > 0) {
+          transfers.push({
+            from: debtor.member,
+            to: creditor.member,
+            amount: payAmount
+          });
+        }
+
+        debtor.amount -= payAmount;
+        creditor.amount -= payAmount;
+
+        if (debtor.amount <= 1) dIdx++;
+        if (creditor.amount <= 1) cIdx++;
+      }
+
+      settlementPlanListEl.innerHTML = "";
+      if (transfers.length === 0) {
+        settlementPlanListEl.innerHTML = '<div class="empty-placeholder">🎉 모든 금액이 이미 정확히 일치하거나 정산할 금액이 없습니다!</div>';
+      } else {
+        transfers.forEach(t => {
+          const item = document.createElement("div");
+          item.className = "settle-step";
+          item.innerHTML = `
+            <div class="settle-transfer">
+              <span><strong>${escapeHtml(t.from)}</strong></span>
+              <span class="settle-arrow">➔</span>
+              <span><strong>${escapeHtml(t.to)}</strong>에게</span>
+            </div>
+            <div class="settle-amount">
+              ${formatWon(t.amount)}
+            </div>
+          `;
+          settlementPlanListEl.appendChild(item);
+        });
+      }
+    }
+
+    function renderAll() {
+      renderMembers();
+      renderExpenseList();
+      renderSettlement();
+    }
+
+    // 탭 전환 핸들러
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+        btn.classList.add("active");
+        const targetTabId = btn.getAttribute("data-tab");
+        document.getElementById(targetTabId).classList.add("active");
+
+        if (targetTabId === "tab-settlement") {
+          renderSettlement();
+        }
+      });
+    });
+
+    function escapeHtml(text) {
+      if (!text) return "";
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // 앱 구동
+    renderTripSelect();
+    renderAll();
+  </script>
+</body>
+</html>
